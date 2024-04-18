@@ -2,16 +2,16 @@ FROM golang:alpine as builder-base
 LABEL builder=true multistage_tag="reset"
 RUN apk add --no-cache upx ca-certificates tzdata git
 
-FROM builder-base as builder-modules
-LABEL builder=true multistage_tag="reset"
-ARG TARGETARCH
-WORKDIR /build
-COPY go.mod .
-COPY go.sum .
-RUN go get github.com/DggHQ/hackwrld-reset/datastore
-RUN go get github.com/DggHQ/hackwrld-reset/k8s
-RUN go mod download
-RUN go mod verify
+# FROM builder-base as builder-modules
+# LABEL builder=true multistage_tag="reset"
+# ARG TARGETARCH
+# WORKDIR /build
+# COPY go.mod .
+# COPY go.sum .
+# RUN go get github.com/DggHQ/hackwrld-reset/datastore
+# RUN go get github.com/DggHQ/hackwrld-reset/k8s
+# RUN go mod download
+# RUN go mod verify
 
 FROM builder-modules as builder
 LABEL builder=true multistage_tag="reset"
