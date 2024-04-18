@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DggHQ/hackwrld-reset/datastore"
+	"github.com/DggHQ/hackwrld-reset/k8s"
 	"github.com/gorilla/websocket"
-	"hackwrld.notacult.website/reset/datastore"
-	"hackwrld.notacult.website/reset/k8s"
 )
 
 type Msg struct {

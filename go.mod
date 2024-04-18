@@ -1,4 +1,4 @@
-module hackwrld.notacult.website/reset
+module github.com/DggHQ/hackwrld-reset
 
 go 1.22.2
 

@@ -8,7 +8,6 @@ ARG TARGETARCH
 WORKDIR /build
 COPY go.mod .
 COPY go.sum .
-RUN go get hackwrld.notacult.website/reset
 RUN go mod download
 RUN go mod verify
 
