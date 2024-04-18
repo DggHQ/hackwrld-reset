@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -82,17 +83,27 @@ func (k *KubeManager) UpdateWebDeploymentEnv(ctx context.Context, namespace stri
 
 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		deploy, err := k.ClientSet.AppsV1().Deployments(namespace).Get(ctx, name, metav1.GetOptions{})
+		log.Printf("Found deployment %s", deploy.Name)
 		if err != nil {
 			panic(fmt.Errorf("failed to get latest version of deployment: %v", err))
 		}
+		newEnv := []core.EnvVar{}
 		currentEnv := deploy.Spec.Template.Spec.Containers[0].Env
+		log.Printf("Old env: %v", currentEnv)
 		for _, env := range currentEnv {
 			if env.Name == "MAINTENANCE" {
-				env.Value = maintenance
-				log.Printf("Updated maintenance to %s", maintenance)
+				newEnv = append(newEnv, core.EnvVar{
+					Name:  "MAINTENANCE",
+					Value: maintenance,
+				})
 			}
+			newEnv = append(newEnv, core.EnvVar{
+				Name:  env.Name,
+				Value: env.Value,
+			})
 		}
-		deploy.Spec.Template.Spec.Containers[0].Env = currentEnv
+		log.Printf("New env: %v", newEnv)
+		deploy.Spec.Template.Spec.Containers[0].Env = newEnv
 		_, err = k.ClientSet.AppsV1().Deployments(namespace).Update(ctx, deploy, metav1.UpdateOptions{})
 		return err
 	})
