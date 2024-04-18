@@ -92,11 +92,12 @@ func (k *KubeManager) UpdateWebDeploymentEnv(ctx context.Context, namespace stri
 				log.Printf("Updated maintenance to %s", maintenance)
 			}
 		}
+		deploy.Spec.Template.Spec.Containers[0].Env = currentEnv
 		_, err = k.ClientSet.AppsV1().Deployments(namespace).Update(ctx, deploy, metav1.UpdateOptions{})
 		return err
 	})
 	if retryErr != nil {
 		panic(fmt.Errorf("update failed: %v", retryErr))
 	}
-	fmt.Println("Updated deployment...")
+	log.Println("Updated deployment...")
 }
