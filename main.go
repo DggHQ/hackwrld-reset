@@ -72,12 +72,6 @@ func deleteDeployments() {
 
 func resetState() {
 
-	k8s := k8s.KubeManager{}
-	ctx := context.TODO()
-	k8s.Init().LoadClientSet()
-	log.Println("Update Web Deployment to set maintenance to disabled")
-	k8s.UpdateWebDeploymentEnv(ctx, namespace, webDeployment, "disabled")
-
 	log.Println("Deleting states.")
 	// Reset the state of the whole game
 	datastore := datastore.DataStore{}
@@ -86,6 +80,13 @@ func resetState() {
 		log.Println(err)
 	}
 	log.Println("Deleting states complete.")
+
+	k8s := k8s.KubeManager{}
+	ctx := context.TODO()
+	k8s.Init().LoadClientSet()
+	log.Println("Update Web Deployment to set maintenance to disabled")
+	k8s.UpdateWebDeploymentEnv(ctx, namespace, webDeployment, "disabled")
+
 	os.Exit(0)
 }
 

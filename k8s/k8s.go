@@ -9,7 +9,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/util/retry"
 )
 
 type KubeManager struct {
@@ -81,34 +80,37 @@ func (k *KubeManager) DeletePlayers(ctx context.Context, namespace string, label
 
 func (k *KubeManager) UpdateWebDeploymentEnv(ctx context.Context, namespace string, name string, maintenance string) {
 
-	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		deploy, err := k.ClientSet.AppsV1().Deployments(namespace).Get(ctx, name, metav1.GetOptions{})
-		log.Printf("Found deployment %s", deploy.Name)
-		if err != nil {
-			panic(fmt.Errorf("failed to get latest version of deployment: %v", err))
-		}
-		newEnv := []core.EnvVar{}
-		currentEnv := deploy.Spec.Template.Spec.Containers[0].Env
-		log.Printf("Old env: %v", currentEnv)
-		for _, env := range currentEnv {
-			if env.Name == "MAINTENANCE" {
-				newEnv = append(newEnv, core.EnvVar{
-					Name:  "MAINTENANCE",
-					Value: maintenance,
-				})
-			}
+	// retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+	deploy, err := k.ClientSet.AppsV1().Deployments(namespace).Get(ctx, name, metav1.GetOptions{})
+	log.Printf("Found deployment %s", deploy.Name)
+	if err != nil {
+		panic(fmt.Errorf("failed to get latest version of deployment: %v", err))
+	}
+	newEnv := []core.EnvVar{}
+	currentEnv := deploy.Spec.Template.Spec.Containers[0].Env
+	log.Printf("Old env: %v", currentEnv)
+	for _, env := range currentEnv {
+		if env.Name == "MAINTENANCE" {
+			newEnv = append(newEnv, core.EnvVar{
+				Name:  "MAINTENANCE",
+				Value: maintenance,
+			})
+		} else {
 			newEnv = append(newEnv, core.EnvVar{
 				Name:  env.Name,
 				Value: env.Value,
 			})
 		}
-		log.Printf("New env: %v", newEnv)
-		deploy.Spec.Template.Spec.Containers[0].Env = newEnv
-		_, err = k.ClientSet.AppsV1().Deployments(namespace).Update(ctx, deploy, metav1.UpdateOptions{})
-		return err
-	})
-	if retryErr != nil {
-		panic(fmt.Errorf("update failed: %v", retryErr))
 	}
+	log.Printf("New env: %v", newEnv)
+	deploy.Spec.Template.Spec.Containers[0].Env = newEnv
+	_, err = k.ClientSet.AppsV1().Deployments(namespace).Update(ctx, deploy, metav1.UpdateOptions{})
+	if err != nil {
+		log.Println(err)
+	}
+	// })
+	// if retryErr != nil {
+	// 	panic(fmt.Errorf("update failed: %v", retryErr))
+	// }
 	log.Println("Updated deployment...")
 }
