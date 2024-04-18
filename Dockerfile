@@ -1,6 +1,6 @@
 FROM golang:alpine as builder-base
 LABEL builder=true multistage_tag="reset"
-RUN apk add --no-cache upx ca-certificates tzdata
+RUN apk add --no-cache upx ca-certificates tzdata git
 
 FROM builder-base as builder-modules
 LABEL builder=true multistage_tag="reset"
