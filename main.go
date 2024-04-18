@@ -22,7 +22,7 @@ var (
 	etcdEndpoints = getEnvToArray("ETCD_ENDPOINTS", "10.10.90.5:2379;10.10.90.6:2379")
 	namespace     = getEnv("NAMESPACE", "hackwrld")
 	labelSelector = getEnv("LABEL_SELECTOR", "hackwrld-component=client")
-	restartTime   = time.Now().Add(time.Minute * 30)
+	restartTime   = time.Now().Add(time.Second * 30)
 	u             = url.URL{
 		Scheme:   getEnv("SCHEME", "ws"),
 		Host:     fmt.Sprintf("%s:%s", getEnv("HOST", "localhost"), getEnv("PORT", "8080")),
@@ -104,7 +104,7 @@ func main() {
 		if time.Now().Before(restartTime) {
 			log.Print("Waiting for restart. Letting players know")
 			msg := Msg{
-				Data: fmt.Sprintf("--HACKWRLD start a new game in %d minutes--", minutes),
+				Data: fmt.Sprintf("[HACKWRLD will start a new game in %d minutes]", minutes),
 			}
 			minutes = minutes - 10
 			message, err := json.Marshal(msg)
@@ -114,13 +114,13 @@ func main() {
 			// Write message to channel to be written to websocket connection
 			wsmessage <- message
 			// Sleep
-			time.Sleep(time.Minute * 10)
+			time.Sleep(time.Second * 10)
 			continue
 		}
 		log.Println("Timer done. Deleting current game")
 		// Let players know game restarts
 		msg := Msg{
-			Data: "--HACKWRLD will now start a new game. Please login again to start your command center--",
+			Data: "[HACKWRLD will now start a new game. Please login again to start your command center]",
 		}
 		message, err := json.Marshal(msg)
 		if err != nil {
