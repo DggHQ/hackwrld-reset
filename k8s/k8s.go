@@ -2,12 +2,13 @@ package k8s
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/retry"
 )
 
 type KubeManager struct {
@@ -50,29 +51,52 @@ func (k *KubeManager) DeletePlayers(ctx context.Context, namespace string, label
 	return nil
 }
 
-func (k *KubeManager) CreateDeploymentWatcher(ctx context.Context, namespace string, labelSelector string) (watch.Interface, error) {
-	opts := metav1.ListOptions{
-		LabelSelector: labelSelector,
-	}
-	return k.ClientSet.AppsV1().Deployments(namespace).Watch(ctx, opts)
-}
+// func (k *KubeManager) CreateDeploymentWatcher(ctx context.Context, namespace string, labelSelector string) (watch.Interface, error) {
+// 	opts := metav1.ListOptions{
+// 		LabelSelector: labelSelector,
+// 	}
+// 	return k.ClientSet.AppsV1().Deployments(namespace).Watch(ctx, opts)
+// }
 
-func (k *KubeManager) WaitDeploymentDeleted(ctx context.Context, namespace string, labelSelector string) error {
-	watcher, err := k.CreateDeploymentWatcher(ctx, namespace, labelSelector)
-	if err != nil {
-		return err
-	}
-	defer watcher.Stop()
-	for {
-		select {
-		case event := <-watcher.ResultChan():
-			if event.Type == watch.Deleted {
-				log.Printf("Deployment has been deleted")
-				return nil
-			}
-		case <-ctx.Done():
-			log.Printf("All deployments deleted")
-			return nil
+// func (k *KubeManager) WaitDeploymentDeleted(ctx context.Context, namespace string, labelSelector string) error {
+// 	watcher, err := k.CreateDeploymentWatcher(ctx, namespace, labelSelector)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer watcher.Stop()
+// 	for {
+// 		select {
+// 		case event := <-watcher.ResultChan():
+// 			if event.Type == watch.Deleted {
+// 				log.Printf("Deployment has been deleted")
+// 				continue
+// 			}
+// 		case <-ctx.Done():
+// 			log.Printf("All deployments deleted")
+// 			return nil
+// 		}
+// 	}
+// }
+
+func (k *KubeManager) UpdateWebDeploymentEnv(ctx context.Context, namespace string, name string, maintenance string) {
+
+	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		deploy, err := k.ClientSet.AppsV1().Deployments(namespace).Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			panic(fmt.Errorf("failed to get latest version of deployment: %v", err))
 		}
+		currentEnv := deploy.Spec.Template.Spec.Containers[0].Env
+		for _, env := range currentEnv {
+			if env.Name == "MAINTENANCE" {
+				env.Value = maintenance
+				log.Printf("Updated maintenance to %s", maintenance)
+			}
+		}
+		_, err = k.ClientSet.AppsV1().Deployments(namespace).Update(ctx, deploy, metav1.UpdateOptions{})
+		return err
+	})
+	if retryErr != nil {
+		panic(fmt.Errorf("update failed: %v", retryErr))
 	}
+	fmt.Println("Updated deployment...")
 }
