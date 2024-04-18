@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -54,18 +55,27 @@ func getEnv(key, defaultValue string) string {
 func resetGame() {
 	// Load K8sConfig
 	k8s := k8s.KubeManager{}
-	err := k8s.Init().LoadClientSet().DeletePlayers(namespace, labelSelector)
+	ctx := context.TODO()
+	k8s.Init().LoadClientSet()
+	log.Println("Deleting Deployments")
+	err := k8s.DeletePlayers(ctx, namespace, labelSelector)
 	if err != nil {
 		log.Println(err)
 	}
-	// Wait after deletion for 2 minutes then delete storage
-	time.Sleep(time.Minute * 2)
+	log.Println("Waiting for deletion...")
+	err = k8s.WaitDeploymentDeleted(ctx, namespace, labelSelector)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println("Deleting deployments complete.")
+	log.Println("Deleting states.")
 	// Reset the state of the whole game
 	datastore := datastore.DataStore{}
 	err = datastore.Init(etcdEndpoints, time.Second*5).ResetGame()
 	if err != nil {
 		log.Println(err)
 	}
+	log.Println("Deleting states complete.")
 	os.Exit(0)
 }
 
