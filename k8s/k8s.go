@@ -68,6 +68,7 @@ func (k *KubeManager) WaitDeploymentDeleted(ctx context.Context, namespace strin
 		case event := <-watcher.ResultChan():
 			if event.Type == watch.Deleted {
 				log.Printf("Deployment has been deleted")
+				return nil
 			}
 		case <-ctx.Done():
 			log.Printf("All deployments deleted")
