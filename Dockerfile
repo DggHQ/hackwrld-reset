@@ -3,7 +3,8 @@ LABEL builder=true multistage_tag="reset"
 RUN apk add --no-cache upx ca-certificates tzdata git
 ARG TARGETARCH
 WORKDIR /build
-COPY *.go .
+COPY . .
+RUN rm -rf .github Dockerfile
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -trimpath -ldflags '-s -w -extldflags="-static"' -v -o reset
 RUN upx --best --lzma reset 
 
