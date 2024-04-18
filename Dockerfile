@@ -8,6 +8,8 @@ ARG TARGETARCH
 WORKDIR /build
 COPY go.mod .
 COPY go.sum .
+RUN go get github.com/DggHQ/hackwrld-reset/datastore
+RUN go get github.com/DggHQ/hackwrld-reset/k8s
 RUN go mod download
 RUN go mod verify
 
