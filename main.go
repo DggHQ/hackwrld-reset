@@ -61,6 +61,7 @@ func deleteDeployments() {
 	k8s.Init().LoadClientSet()
 	log.Println("Update Web Deployment to set maintenance to enabled")
 	k8s.UpdateWebDeploymentEnv(ctx, namespace, webDeployment, "enabled")
+	time.Sleep(time.Minute * 1)
 	log.Println("Deleting Deployments")
 	err := k8s.DeletePlayers(ctx, namespace, labelSelector)
 	if err != nil {
@@ -71,7 +72,6 @@ func deleteDeployments() {
 }
 
 func resetState() {
-	time.Sleep(time.Minute * 1)
 	log.Println("Deleting states.")
 	// Reset the state of the whole game
 	datastore := datastore.DataStore{}
@@ -80,7 +80,7 @@ func resetState() {
 		log.Println(err)
 	}
 	log.Println("Deleting states complete.")
-
+	time.Sleep(time.Minute * 1)
 	k8s := k8s.KubeManager{}
 	ctx := context.TODO()
 	k8s.Init().LoadClientSet()
