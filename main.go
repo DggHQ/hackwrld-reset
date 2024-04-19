@@ -7,12 +7,14 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/DggHQ/hackwrld-reset/datastore"
 	"github.com/DggHQ/hackwrld-reset/k8s"
 	"github.com/gorilla/websocket"
+	"github.com/redis/go-redis/v9"
 )
 
 type Msg struct {
@@ -20,6 +22,8 @@ type Msg struct {
 }
 
 var (
+	valkeyHost    = getEnv("VALKEY_HOST", "valkey.hackwrld.svc")
+	valkeyctx     = context.Background()
 	etcdEndpoints = getEnvToArray("ETCD_ENDPOINTS", "10.10.90.5:2379;10.10.90.6:2379")
 	namespace     = getEnv("NAMESPACE", "hackwrld")
 	labelSelector = getEnv("LABEL_SELECTOR", "hackwrld-component=client")
@@ -55,7 +59,18 @@ func getEnv(key, defaultValue string) string {
 }
 
 func deleteDeployments() {
-	// Load K8sConfig
+	// Set the current timestamp as a key in valkey to get for the leaderboard static time values
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:6379", valkeyHost),
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	timestamp := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
+	err := rdb.Set(valkeyctx, "ts", timestamp[0:13], 0).Err()
+	if err != nil {
+		log.Println(err)
+	}
+	// Load K8sConfig and recofigure web interface maintenance state
 	k8s := k8s.KubeManager{}
 	ctx := context.TODO()
 	k8s.Init().LoadClientSet()
@@ -63,7 +78,7 @@ func deleteDeployments() {
 	k8s.UpdateWebDeploymentEnv(ctx, namespace, webDeployment, "enabled")
 	time.Sleep(time.Minute * 1)
 	log.Println("Deleting Deployments")
-	err := k8s.DeletePlayers(ctx, namespace, labelSelector)
+	err = k8s.DeletePlayers(ctx, namespace, labelSelector)
 	if err != nil {
 		log.Println(err)
 	}
