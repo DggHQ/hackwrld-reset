@@ -167,6 +167,17 @@ func main() {
 			}
 			wsmessage <- message
 			// Delete Deployments and exit
+			// Set the current timestamp as a key in valkey to get for the leaderboard static time values
+			rdb := redis.NewClient(&redis.Options{
+				Addr:     fmt.Sprintf("%s:6379", valkeyHost),
+				Password: "", // no password set
+				DB:       0,  // use default DB
+			})
+			timestamp := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
+			err = rdb.Set(valkeyctx, "ts", timestamp[0:13], 0).Err()
+			if err != nil {
+				log.Println(err)
+			}
 			os.Exit(0)
 			//deleteDeployments()
 		}
