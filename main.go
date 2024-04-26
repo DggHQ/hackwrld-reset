@@ -167,11 +167,13 @@ func main() {
 			}
 			wsmessage <- message
 			// Delete Deployments and exit
-			deleteDeployments()
+			os.Exit(0)
+			//deleteDeployments()
 		}
 	case "STATE":
 		// Delete State
-		resetState()
+		os.Exit(0)
+		//resetState()
 	}
 
 }
