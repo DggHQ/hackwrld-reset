@@ -24,13 +24,13 @@ type Bot struct {
 func (b *Bot) Start(key string, messagechan chan string) {
 	dgg, err := dggchat.New(key)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 	b.Session = dgg
 	b.Message = messagechan
 	err = b.Session.Open()
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 	defer b.Session.Close()
 
@@ -62,7 +62,7 @@ func (b *Bot) SendMessage() {
 	for msg := range b.Message {
 		err := b.Session.SendMessage(msg)
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 		}
 	}
 
@@ -77,12 +77,12 @@ func checkConnection(s *dggchat.Session) {
 			log.Println("Ping mismatch, attempting to reconnect")
 			err := s.Close()
 			if err != nil {
-				log.Fatalln(err)
+				log.Println(err)
 			}
 
 			err = s.Open()
 			if err != nil {
-				log.Fatalln(err)
+				log.Println(err)
 			}
 
 			continue

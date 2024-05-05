@@ -89,7 +89,7 @@ func main() {
 				minutes = minutes - 10
 				message, err := json.Marshal(msg)
 				if err != nil {
-					log.Fatalln(err)
+					log.Println(err)
 				}
 				// Write message to channel to be written to websocket connection
 				wsmessage <- message
@@ -107,7 +107,7 @@ func main() {
 			}
 			message, err := json.Marshal(msg)
 			if err != nil {
-				log.Fatalln(err)
+				log.Println(err)
 			}
 			wsmessage <- message
 			chatmsg <- reminder
