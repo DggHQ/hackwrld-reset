@@ -101,7 +101,7 @@ func main() {
 			}
 			log.Println("Timer done. Deleting current game")
 			// Let players know game restarts
-			reminder := "[HACKWRLD will now start a new game. Please login again to start your command center]"
+			reminder := "[HACKWRLD will now start a new game. Please login here if you wanna play: https://hackwrld.notacult.website/]"
 			msg := Msg{
 				Data: reminder,
 			}
